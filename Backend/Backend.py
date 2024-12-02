@@ -1,203 +1,106 @@
 #to test 
 
-from flask import Flask,request,jsonify,render_template,redirect ,url_for ,session
+from functools import wraps
+from flask import Flask,request,jsonify,render_template,redirect ,url_for ,session,Response
 from flask_cors import CORS
 import pickle 
+import jwt
 import pymongo
-import datetime
+from datetime import datetime, timedelta, date
 import json
 from bson import ObjectId
 import math
-
-def tr(value):
-    factor = 10 ** 2  # Two decimal places
-    truncated_value = math.trunc(value * factor)
-    return truncated_value
-def json_util(obj):
-    if isinstance(obj, ObjectId):
-        return str(obj)
-    elif isinstance(obj, list):
-        return [json_util(item) for item in obj]
-    elif isinstance(obj, dict):
-        return {key: json_util(value) for key, value in obj.items()}
-    else:
-        return obj
-    
+from User import User
+from  werkzeug.security import generate_password_hash, check_password_hash
+from Appsettings import SecretKey
 app=Flask(__name__)
 CORS(app)
 
-app.secret_key = 'your-secret-key'
+app.secret_key = SecretKey
+app.config['SECRET_KEY'] = SecretKey
 client = pymongo.MongoClient('mongodb://localhost:27017/')
 db = client['GestionStockage']
 
-"""@app.route('/home')
-def home():
-    if not 'user_id' in session:
-            return redirect(url_for('login_page'))
-    if session.get('role')=='1':
-        return render_template('indexad.html')
-    return render_template('index.html')
-@app.route('/')
-def login_page():
-    if not 'user_id' in session:
-            return render_template('login.html')
-    return redirect(url_for('home'))
-    """
+# decorator for verifying the JWT
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # jwt is passed in the request header
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
+        # return 401 if token is not passed
+        if not token:
+            return jsonify({'message' : 'Token is missing !!'}), 401
+  
+        try:
+            
+            # decoding the payload to fetch the stored details
+            data = jwt.decode(token, app.config['SECRET_KEY'],algorithms=["HS256"])
+            current_user = db.users.find_one({ "PublicId" : data['public_id'] })
+        except:
+            #return jsonify({"message":"Token Invalide"}), 401
+            return jsonify({"message","Token Invalide"}), 401
+        # returns the current logged in users context to the routes
+        return  f(current_user, *args, **kwargs)
+  
+    return decorated
+
 @app.route('/register',methods=['POST'])
 def create_user():
-    user = request.json['user']
-    pwd = request.json['pwd']
+    if request.json['username']==None or request.json['password']==None:
+        return {"message":"Invalid Inputs"},401
+    user=User(username=request.json['username'],password=generate_password_hash(request.json['password']),role="user")
     try:
-        rech=db.users.find_one({'username':user})
+        rech=db.users.find_one({'username':user.username})
         if not rech==None:
-            return jsonify({'message':'utilisateur deja exisite'})
+            return {'message':'utilisateur deja exisite'},400
         else:
-            db.users.insert_one({'username':user,'password':pwd,'isadmin':'0'})
-            return jsonify({'message':'utilisateur cree avec succee'})
-    except pymongo.errors.PyMongoError as e:
-        return jsonify({'message':'erreur !'})
+            app.logger.info(user.__dict__)
+            db.users.insert_one(user.dict())
+            return {'message':'utilisateur cree avec succee'},201
+    except Exception as e:
+        return e,500
 
 @app.route('/login',methods=['POST'])
 def login():
-     user = request.json['user']
-     pwd = request.json['pwd']
-     res=db.users.find_one({'username':user,'password':pwd})
-     if(not res==None):
-         session['user_id'] = user 
-         session['role']=res['role']
-         return jsonify({'status':'1','message':'utilisateur trouve'})
-     else :
-         return jsonify({'status':'0','message':'utilisateur introuvable'})
+     user = request.json['username']
+     pwd = request.json['password']
+     res=db.users.find_one({'username':user})
+     if(res==None):
+         return {'message':'utilisateur non trouve'},401
+     if check_password_hash(res["password"], pwd):
+        # generates the JWT Token
+        expDate=datetime.now() + timedelta(days=30)
+        token = jwt.encode({
+            'public_id': str(res["PublicId"]),
+            'exp' : int(expDate.timestamp())
+        }, app.config['SECRET_KEY'],algorithm="HS256")
+        return {'token' : token},201
+     else:
+        return {"message":"wrong password"},403
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    session.pop('role', None)
 
-@app.route('/produit',methods=['POST'])
-def ajoutProduit():
-     if not 'user_id' in session:
-            return jsonify({'status':'0','message':'login please'})
-     user = request.json['user']
-     pwd = request.json['pwd']
-     res=db.users.find_one({'username':user,'password':pwd})
-     if(not res==None):
-         session['user_id'] = user 
-         session['role']=res['role']
-         return jsonify({'status':'1','message':'utilisateur trouve'})
-     else :
-         return jsonify({'status':'0','message':'utilisateur introuvable'})
-     
+
 @app.route('/produit',methods=['GET'])
-def getAllProduit():
-     if not 'user_id' in session:
-            return jsonify({'status':'0','message':'login please'})
-     user = request.json['user']
-     pwd = request.json['pwd']
-     res=db.users.find_one({'username':user,'password':pwd})
-     if(not res==None):
-         session['user_id'] = user 
-         session['role']=res['role']
-         return jsonify({'status':'1','message':'utilisateur trouve'})
-     else :
-         return jsonify({'status':'0','message':'utilisateur introuvable'})
+@token_required
+def ajoutProduit(current_user):
+     return {"message success":"success"},200
+     
+ 
      
 
 
-@app.route('/produi/<doc>',methods=['GET'])
-def getProduit(doc):
-    try:
-        pass
-    except pymongo.errors.PyMongoError as e:
-        return jsonify({'message':'erreur !'})
+# # @app.route('/produi/<doc>',methods=['GET'])
+# # def getProduit(doc):
+# #    pass
     
-@app.route('/produi/<doc>',methods=['DELETE'])
-def getProduit(doc):
-    try:
-        pass
-    except pymongo.errors.PyMongoError as e:
-        return jsonify({'message':'erreur !'})
-
-@app.route('/produi/<doc>',methods=['PUT'])
-def getProduit(doc):
-    try:
-        pass
-    except pymongo.errors.PyMongoError as e:
-        return jsonify({'message':'erreur !'})
-
-     
-@app.route('/history')
-def history():
-    if not 'user_id' in session:
-            return redirect(url_for('login_page'))
-    if session.get('role')=='1':
-        return render_template('historyad.html')
-    return render_template('history.html')
-
-@app.route('/history/recent')
-def history_data_recent():
-    if session.get('role')=='1':
-        predictions = list(db.predictions.find().sort('_id',-1))
-    else:
-        predictions = list(db.predictions.find({'username':session.get('user_id')}).sort('_id',-1))
-    prediction_data_json = json.loads(json.dumps(json_util(predictions)))
-    return prediction_data_json
-
-@app.route('/history/data')
-def history_data_encient():
-    predictions = list(db.predictions.find({'username':session.get('user_id')}).sort('_id',1))
-    prediction_data_json = json.loads(json.dumps(json_util(predictions)))
-    return prediction_data_json
-
-@app.route('/history/defaut')
-def history_data_defaut():
-    if session.get('role')=='1':
-        predictions = list(db.predictions.find().sort([('proba',-1),('_id',-1)]))
-    else:
-        predictions = list(db.predictions.find({'username':session.get('user_id')}).sort([('proba',-1),('_id',-1)]))
-    prediction_data_json = json.loads(json.dumps(json_util(predictions)))
-    return prediction_data_json
-
-@app.route('/history/nondefaut')
-def history_data_nondefaut():
-    if session.get('role')=='1':
-        predictions = list(db.predictions.find().sort([('proba',1),('_id',-1)]))
-    else:
-        predictions = list(db.predictions.find({'username':session.get('user_id')}).sort([('proba',1),('_id',-1)]))
-    prediction_data_json = json.loads(json.dumps(json_util(predictions)))
-    return prediction_data_json
-
-@app.route('/history/delete/<doc>',methods=['DELETE'])
-def delete_doc(doc):
-    try:
-        result = db.predictions.delete_one({'_id': ObjectId(doc)})
-        return jsonify({'message': 'enregistrement supprime avec succee'})
-    except pymongo.errors.PyMongoError as e:
-        return jsonify({'message':'erreur !'})
-    
-@app.route('/users/get')
-def get_users():
-    users = list(db.users.find({"isadmin":'0'}))
-    prediction_data_json = json.loads(json.dumps(json_util(users)))
-    return prediction_data_json
-
-@app.route('/users')
-def users_page():
-    if not 'user_id' in session:
-            return redirect(url_for('login_page'))
-    if session.get('role')=='1':
-        return render_template('users.html')
-    return redirect(url_for('home'))
-
-@app.route('/users/delete/<doc>',methods=['DELETE'])
-def delete_doc_user(doc):
-    try:
-        db.users.delete_one({'_id': ObjectId(doc)})
-        return jsonify({'message': 'enregistrement supprime avec succee'})
-    except pymongo.errors.PyMongoError as e:
-        return jsonify({'message':'erreur !'})
-
-
-    
+# # @app.route('/produi/<doc>',methods=['DELETE'])
+# # def getProduit(doc):
+# #     pass
+# # @app.route('/produi/<doc>',methods=['PUT'])
+# # def getProduit(doc):
+# #     pass
 if __name__=='__main__':
-    app.run(port=3002)
+    app.run(debug=True)
+  
