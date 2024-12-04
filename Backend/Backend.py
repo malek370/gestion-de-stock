@@ -10,6 +10,8 @@ from datetime import datetime, timedelta, date
 import json
 from bson import ObjectId
 import math
+from Commande import Commande
+from Produit import Produit
 from User import User
 from  werkzeug.security import generate_password_hash, check_password_hash
 from Appsettings import SecretKey
@@ -74,18 +76,83 @@ def login():
      else:
         return {"message":"wrong password"},403
 
-
+#PRODUITS +++++++++++++++++++
 
 @app.route('/produit',methods=['GET'])
-@token_required
-def ajoutProduit(current_user):
-    if current_user["role"]!="user":
-        return {"message":"role unauthorized"},401
-     
+def GetAllProduit():
+    produits=Produit.get(db)
+    return produits
+
+@app.route('/produit/<doc>',methods=['GET'])
+def GetProduit(doc):
+    produit=Produit.getOne(doc,db)
+    if produit==None: return {"message":"Produit introuvable"},404
+    return produit.__dict__,200
+
+@app.route('/produit',methods=['POST'])
+def CreerProduit():
+    produit=Produit(request.json["nom_prod"],request.json["description"],int((request.json["quantite"] )),float(request.json["prix_unit"]))
+    produit.ajouter(db)
+    return {"message":"created successfully"} ,201
+
+@app.route('/produit/<doc>',methods=['PUT'])
+def UpdateProduit(doc):
+    nouveauProduit={
+    "nom_prod": request.json["nom_prod"],
+    "description": request.json["description"],
+    "quantite":int(request.json["quantite"] ),
+    "prix_unit":float(request.json["prix_unit"])
+    }
+    produit=Produit.getOne(doc,db)
+    if produit==None: return {"message":"Produit introuvable"},404
+    produit.modifier(nouveauProduit,db)
+    return {"message":"updated successfully"} ,204
+
+@app.route('/produit/<doc>',methods=['DELETE'])
+def supprimerProduit(doc):
+    produit=Produit.getOne(doc,db)
+    if produit==None: return {"message":"Produit introuvable"},404
+    produit.supprimer(db)   
+    return {"message":"deleted successfully"},204    
+
+
+#commandes ============================================
+
+
 @app.route('/commande',methods=['GET'])
-@token_required
-def ajoutcommande(current_user):
-    return {"message":"ok"},200 
+def getAllCommandes():
+    return Commande.get(db)
+
+@app.route('/commande/<doc>',methods=['GET'])
+def GetCommande(doc):
+    commande=Commande.getOne(doc,db)
+    if commande==None: return {"message":"commande introuvable"},404
+    return commande.__dict__,200
+
+
+@app.route('/commande',methods=['POST'])
+def CreerCommande():
+    commande=Commande()
+    commande.ajouter(db)
+    return {"message":commande.code_cmd} ,201
+
+@app.route('/commande/<doc>',methods=['PUT'])
+def AjouterProduitCommande(doc):
+    produit=Produit.getOne(request.json["code_prod"],db)
+    if produit==None: return {"message":"Produit introuvable"},404
+    commande=Commande.getOne(doc,db)
+    if commande==None: return {"message":"commande introuvable"},404
+    commande.ajouterProduit(produit,int(request.json["nb_produit"]),db)
+    return {"message":"updated successfully"} ,204
+
+@app.route('/commande/<doc>',methods=['DELETE'])
+def supprimerCommade(doc):
+    commande=Commande.getOne(doc,db)
+    if commande==None: return {"message":"Commande introuvable"},404
+    commande.supprimer(db)   
+    return {"message":"deleted successfully"},204
+# def ajoutcommande():
+#     return {"message":"ok"},200 
      
 
 
