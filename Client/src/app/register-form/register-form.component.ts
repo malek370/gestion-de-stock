@@ -1,40 +1,45 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { User } from '../_models/User';
+import { UserRegister } from '../_models/UserRegister';
+import { AccountServiceService } from '../_services/account-service.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-register-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule,RouterLink],
   templateUrl: './register-form.component.html',
   styleUrl: './register-form.component.css'
 })
 export class RegisterFormComponent implements OnInit {
-  fn = inject(FormBuilder);
+  fb = inject(FormBuilder);
+  accountService=inject(AccountServiceService);
   registerForm: FormGroup = new FormGroup({});
   ngOnInit(): void {
     this.initializeForm();
   }
 
   initializeForm() {
-    this.registerForm = this.fn.group({
-      username: ["", Validators.required],
-      password: ["", [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ["", [Validators.required, Validators.minLength(8),this.matchPassword]]
-    });
-    this.registerForm.get("password")?.valueChanges.subscribe({
-      next:_=>this.registerForm.get("password")?.updateValueAndValidity
-    })
+    this.registerForm = this.fb.group({
+      username: ['', Validators.required],
+      password: ['12345678', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['12345678', Validators.required],
+    }, { validators: this.passwordsMatchValidator });
   }
-  matchPassword(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      console.log("parent:"+control.parent?.get("password")?.value);
-      console.log("controle:"+control.value);
-      console.log("test:"+control.value===control.parent?.get("password")?.value);
-      return control.value===control.parent?.get("password")?.value?null:{NoMatch:true};
-    }
-  }
+  passwordsMatchValidator: Validators = (group: FormGroup): ValidationErrors | null => {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+
+    return password === confirmPassword ? null : { passwordsMismatch: true };
+  };
   register(){
     console.log(this.registerForm.value);
+    const user :UserRegister={
+      username:this.registerForm.value.username,
+      password:this.registerForm.value.password
+    }
     console.log(this.registerForm.status);
+    this.accountService.register(user);
   }
 }

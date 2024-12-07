@@ -16,7 +16,7 @@ from User import User
 from  werkzeug.security import generate_password_hash, check_password_hash
 from Appsettings import SecretKey
 app=Flask(__name__)
-CORS(app)
+CORS(app,origins=["http://localhost:4200"])
 
 app.secret_key = SecretKey
 app.config['SECRET_KEY'] = SecretKey
@@ -54,7 +54,12 @@ def create_user():
         else:
             app.logger.info(user.__dict__)
             db.users.insert_one(user.dict())
-            return {'message':'utilisateur cree avec succee'},201
+            expDate=datetime.now() + timedelta(days=30)
+            token = jwt.encode({
+            'public_id':user.PublicId,
+            'exp' : int(expDate.timestamp())
+            }, app.config['SECRET_KEY'],algorithm="HS256")
+            return {'token' : token,"username":user.username},201
     except Exception as e:
         return e,500
 
@@ -72,7 +77,7 @@ def login():
             'public_id': str(res["PublicId"]),
             'exp' : int(expDate.timestamp())
         }, app.config['SECRET_KEY'],algorithm="HS256")
-        return {'token' : token},201
+        return {'token' : token,"username":user},201
      else:
         return {"message":"wrong password"},403
 
@@ -104,7 +109,7 @@ def CreerProduit():
         produit = Produit(request.json["nom_prod"], request.json["description"], 
                           int(request.json["quantite"]), float(request.json["prix_unit"]))
         produit.ajouter(db)
-        return {"message": "created successfully"}, 201
+        return {"message": produit.code_prod}, 201
     except Exception as e:
         return {"message": f"Error creating product: {str(e)}"}, 500
 

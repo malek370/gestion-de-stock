@@ -1,0 +1,11 @@
+<div class="row row-cols-3 g-3">
+    <div class="col">
+        <app-produit-detail [produit]="produitACreer" (toDelete)="supprimer(produitACreer.code_prod)"></app-produit-detail>
+    </div>
+    <div *ngFor="let produit of this.produitService.produits(   ); trackBy: trackById; let i = index">
+        <div class="col">
+            <app-produit-detail [produit]="produit" (toDelete)="supprimer(produit.code_prod)"></app-produit-detail>
+        </div>
+    </div>
+
+</div>
