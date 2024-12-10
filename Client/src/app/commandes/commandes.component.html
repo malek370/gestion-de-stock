@@ -1,0 +1,11 @@
+<div class="row row-cols-3 g-3">
+    <div class="col">
+        <app-commande-detail [commande]="commandeACreer" (toDelete)="supprimer(commandeACreer.code_cmd)"></app-commande-detail>
+    </div>
+    <div *ngFor="let commande of this.commandeService.commandes(); trackBy: trackById; let i = index">
+        <div class="col">
+            <app-commande-detail [commande]="commande" (toDelete)="supprimer(commande.code_cmd)"></app-commande-detail>
+        </div>
+    </div>
+
+</div>

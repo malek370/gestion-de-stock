@@ -1,4 +1,4 @@
-<div class="card" style="width: 18rem;">
+<div class="card" style="width: 20rem;">
     <div class="card-body">
         <form [formGroup]="produitForm">
 
@@ -12,15 +12,18 @@
         </form>
 
         @if(this.produit().code_prod.length>0){
-        @if (this.produitForm.disabled) {<button (click)="switchModif()"
-            class="btn btn-secondary ms-4">modifier</button>}
-        @else {<button [disabled]="!this.produitForm.valid" (click)="enregistrer()"
-            class="btn btn-info ms-4">enregistrer</button>}
+        <div class="row">
+            @if (this.produitForm.disabled) {<button (click)="switchModif()"
+                class="btn btn-secondary ms-4 col-5">modifier</button>}
+            @else {<button [disabled]="!this.produitForm.valid" (click)="enregistrer()"
+                class="btn btn-info ms-4 col-5">enregistrer</button>}
 
-        <button (click)="toDelete.emit(produit().code_prod)" class="btn btn-danger ms-4">supprimer</button>
+            <button (click)="toDelete.emit(produit().code_prod)" class="btn btn-danger ms-4 col-5">supprimer</button>
+            <button class="btn btn-outline-info col-12" (click)="openDialog()">ajouter à la commande</button>
+        </div>
         }
         @else {
-            <button [disabled]="!this.produitForm.valid" (click)="ajouterProduit()"
+        <button [disabled]="!this.produitForm.valid" (click)="ajouterProduit()"
             class="btn btn-primary ms-4">ajouter</button>
         }
 

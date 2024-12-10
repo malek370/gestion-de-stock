@@ -3,16 +3,20 @@ from ProduitCommande import ProduitCommande
 from Produit import Produit
 class Commande:
 
-    def __init__(self):
+    def __init__(self,titre:str,description:str):
 
         self.code_cmd = uuid.uuid4().hex
+        self.titre = titre
+        self.description=description
         self.items = []
 
     def getOne(code_cmd:str,db):
         res=db.commandes.find_one({"code_cmd":code_cmd})
         if res==None: return None
-        c = Commande()
+        c = Commande("","")
         c.code_cmd=res["code_cmd"]
+        c.description=res["description"]
+        c.titre=res["titre"]
         c.items=list(res["items"])
         return c
 
@@ -21,7 +25,7 @@ class Commande:
             return False
         print("enter modif with :",self.__dict__)
         produit.modifier({"quantite":produit.quantite-quantite},db)
-        self.items.append(ProduitCommande(produit.code_prod,quantite).__dict__)
+        self.items.append(ProduitCommande(produit.code_prod,produit.nom_prod,quantite).__dict__)
         db.commandes.update_one({"code_cmd":self.code_cmd},{ '$set' : 
         self.__dict__
         })

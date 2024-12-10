@@ -1,0 +1,21 @@
+<div class="card" style="width: 18rem;">
+    <div class="card-body">
+        <form [formGroup]="commandeForm">
+
+            <h5 class="card-title"><input type="text" formControlName="titre"></h5>
+            <p class="card-text"><input type="text" formControlName="description"></p>
+        </form>
+
+        @if(this.commande().code_cmd.length>0){
+        
+        <button (click)="toDelete.emit(commande().code_cmd)" class="btn btn-danger ms-4">supprimer</button>
+        <button (click)="details()" class="btn btn-info ms-4">details</button>
+
+        }
+        @else {
+            <button [disabled]="!this.commandeForm.valid" (click)="ajoutercommande()"
+            class="btn btn-primary ms-4">ajouter</button>
+        }
+
+    </div>
+</div>

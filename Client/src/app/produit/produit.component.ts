@@ -24,15 +24,7 @@ export class ProduitComponent implements OnInit {
     prix_unit: 0
   }
   ngOnInit(): void {
-    this.creerProduitForm=this.fb.group({
-      nom_prod:[""],
-      prix_unit:[""],
-      quantite : [""],
-      description : [""]
-    });
-    this.creerProduitForm.disable();
     this.produitService.getAll();
-    
   }
   supprimer(event:string){
     if(event.length>0)

@@ -168,7 +168,7 @@ def GetCommande(doc):
 @app.route('/commande', methods=['POST'])
 def CreerCommande():
     try:
-        commande = Commande()
+        commande = Commande(request.json["titre"],request.json["description"])
         commande.ajouter(db)
         return {"message": commande.code_cmd}, 201
     except Exception as e:

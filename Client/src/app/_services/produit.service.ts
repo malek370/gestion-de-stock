@@ -10,10 +10,17 @@ export class ProduitService {
   http=inject(HttpClient);
   produits=signal<Produit[]>([]);
   url="http://127.0.0.1:5000"+"/produit";
+  
   getAll(){
+    console.log('get all produit');
     this.http.get<Produit[]>(this.url).subscribe({
       next:res=>this.produits.set(res)
-    })
+    });
+    console.log("got all produits x");
+    console.log(this.produits());
+  }
+  getOne(code:string){
+    return this.http.get<Produit>(this.url+"/"+code);
   }
   update(produit:Produit){
     this.http.put(this.url+"/"+produit.code_prod,produit).subscribe({

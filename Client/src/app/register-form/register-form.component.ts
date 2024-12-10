@@ -23,8 +23,8 @@ export class RegisterFormComponent implements OnInit {
   initializeForm() {
     this.registerForm = this.fb.group({
       username: ['', Validators.required],
-      password: ['12345678', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['12345678', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', Validators.required],
     }, { validators: this.passwordsMatchValidator });
   }
   passwordsMatchValidator: Validators = (group: FormGroup): ValidationErrors | null => {
