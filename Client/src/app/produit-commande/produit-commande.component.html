@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>ajouter produit a la commande</h2>
+<mat-dialog-content class="mat-typography">
+  <h3>Selectionner la commande et nombre d'exemplaires</h3>
+  <form [formGroup]="produitCommandeForm">
+    <div class="row">
+        <div class="col-4  mx-auto">
+            <div class="input-group d-flex">
+                <button type="button" class="btn btn-outline-secondary btn-number" (click)="minusOne()" >
+                    <fa-icon [icon]="faMinus"></fa-icon>
+                </button>
+                <input type="text" name="quant[1]" class="form-control input-number" value="1" formControlName="nb_prod">
+                <button type="button" class="btn btn-outline-secondary btn-number" (click)="plusOne()" >
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                </button>
+            </div>
+        </div>
+        <div class="col-4  mx-auto">
+            <select class="form-select" aria-label="Default select example" formControlName="code_cmd">
+                <option *ngFor="let cmd of commandeService.commandes()" value="{{cmd.code_cmd}}">{{cmd.titre}}</option>
+              </select>
+        </div>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button [mat-dialog-close]="null">annuler</button>
+  <button mat-button [mat-dialog-close]="this.produitCommandeForm.value" [disabled]="produitCommandeForm.invalid">ajouter</button>
+</mat-dialog-actions>

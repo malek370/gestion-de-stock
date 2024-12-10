@@ -1,0 +1,29 @@
+<h2 mat-dialog-title>{{commande().titre}}</h2>
+<mat-dialog-content >
+ <h3>{{commande().description}}</h3>
+ <table class="table table-sm ">
+    <thead>
+      <tr>
+        <th scope="col">produit</th>
+        <th scope="col">nombre d'exemplaire</th>
+        <th scope="col">prix</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of commande().items">
+        <td>{{item.nom_prod}}</td>
+        <td>{{item.nb_produit}}</td>
+        <td>{{item.prixTot}}</td>
+      </tr>
+      <tr class="table-dark">
+        <td>Total</td>
+        <td>{{commande().nombreItems}}</td>
+        <td>{{commande().prixCommande}}</td>
+      </tr>
+
+    </tbody>
+  </table>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>fermer</button>
+</mat-dialog-actions>

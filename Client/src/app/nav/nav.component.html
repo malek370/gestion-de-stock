@@ -1,0 +1,25 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" RouterLink="">Navbar</a>
+
+  <div class="me-2">
+
+    @if(account.currentUser()){
+    <div class=" d-flex">
+      <ul class="navbar-nav mr-auto ">
+        <li class="nav-item active">
+          <a class="nav-link" routerLink="/produit" routerLinkActive="active-link">Produit </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/commandes" routerLinkActive="active-link">Commandes</a>
+        </li>
+      </ul>
+      
+      <div class=" pe-2">
+        <button class="btn btn-outline-danger my-2 my-sm-0" type="button" (click)="logout()">deconnection</button>
+      </div> 
+    </div>
+    }
+
+
+  </div>
+</nav>
