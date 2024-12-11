@@ -1,5 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -19,21 +19,22 @@ export class ProduitCommandeComponent implements OnInit {
   faPlus = faPlus;
   faMinus = faMinus;
   commandeService=inject(CommandesService);
+  maxQtt =signal<number>( inject(MAT_DIALOG_DATA));
   produitCommandeForm: FormGroup = new FormGroup({});
   fb=inject(FormBuilder);
   ngOnInit(): void {
       this.produitCommandeForm=this.fb.group({
-        nb_prod:["1",[Validators.min(1)]],
+        nb_prod:["1",[Validators.min(1),Validators.max(this.maxQtt())]],
         code_cmd:[,[Validators.required]]
       })
       this.commandeService.getAll();
   }
   plusOne() {
-    if(!(this.produitCommandeForm.value.nb_prod>10))
+    if(!(this.produitCommandeForm.value.nb_prod>=this.maxQtt()))
       this.produitCommandeForm.get("nb_prod")?.setValue(Number(this.produitCommandeForm.value.nb_prod)+1); 
     }
     minusOne() {
-      if(this.produitCommandeForm.value.nb_prod>0)
+      if(this.produitCommandeForm.value.nb_prod>1)
         this.produitCommandeForm.get("nb_prod")?.setValue(Number(this.produitCommandeForm.value.nb_prod)-1);
     }
 }

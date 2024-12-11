@@ -12,12 +12,9 @@ export class ProduitService {
   url="http://127.0.0.1:5000"+"/produit";
   
   getAll(){
-    console.log('get all produit');
     this.http.get<Produit[]>(this.url).subscribe({
       next:res=>this.produits.set(res)
     });
-    console.log("got all produits x");
-    console.log(this.produits());
   }
   getOne(code:string){
     return this.http.get<Produit>(this.url+"/"+code);
