@@ -31,14 +31,14 @@ def token_required(f):
         if 'x-access-token' in request.headers:
             token = request.headers['x-access-token']
         if not token:
-            return jsonify({'message' : 'Token is missing !!'}), 401
+            return {'message' : 'Token is missing !!'}, 401
   
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'],algorithms=["HS256"])
             current_user = db.users.find_one({ "PublicId" : data['public_id']})
         except Exception:
-            return jsonify({"message","Token Invalide"}), 401
-        return  f(current_user, *args, **kwargs)
+            return {"message","Token Invalide"}, 401
+        return  f(*args, **kwargs)
   
     return decorated
 
@@ -84,6 +84,7 @@ def login():
 #PRODUITS +++++++++++++++++++
 
 @app.route('/produit', methods=['GET'])
+@token_required
 def GetAllProduit():
     try:
         produits = Produit.get(db)
@@ -93,6 +94,7 @@ def GetAllProduit():
 
 
 @app.route('/produit/<doc>', methods=['GET'])
+@token_required
 def GetProduit(doc):
     try:
         produit = Produit.getOne(doc, db)
@@ -104,6 +106,7 @@ def GetProduit(doc):
 
 
 @app.route('/produit', methods=['POST'])
+@token_required
 def CreerProduit():
     try:
         produit = Produit(request.json["nom_prod"], request.json["description"], 
@@ -115,6 +118,7 @@ def CreerProduit():
 
 
 @app.route('/produit/<doc>', methods=['PUT'])
+@token_required
 def UpdateProduit(doc):
     try:
         nouveauProduit = {
@@ -133,6 +137,7 @@ def UpdateProduit(doc):
 
 
 @app.route('/produit/<doc>', methods=['DELETE'])
+@token_required
 def supprimerProduit(doc):
     try:
         produit = Produit.getOne(doc, db)
@@ -147,6 +152,7 @@ def supprimerProduit(doc):
 # Commandes ============================================
 
 @app.route('/commande', methods=['GET'])
+@token_required
 def getAllCommandes():
     try:
         return Commande.get(db)
@@ -155,6 +161,7 @@ def getAllCommandes():
 
 
 @app.route('/commande/<doc>', methods=['GET'])
+@token_required
 def GetCommande(doc):
     try:
         commande = Commande.getOne(doc, db)
@@ -166,6 +173,7 @@ def GetCommande(doc):
 
 
 @app.route('/commande', methods=['POST'])
+@token_required
 def CreerCommande():
     try:
         commande = Commande(request.json["titre"],request.json["description"])
@@ -176,6 +184,7 @@ def CreerCommande():
 
 
 @app.route('/commande/<doc>', methods=['PUT'])
+@token_required
 def AjouterProduitCommande(doc):
     try:
         produit = Produit.getOne(request.json["code_prod"], db)
@@ -191,6 +200,7 @@ def AjouterProduitCommande(doc):
 
 
 @app.route('/commande/<doc>', methods=['DELETE'])
+@token_required
 def supprimerCommade(doc):
     try:
         commande = Commande.getOne(doc, db)
@@ -201,21 +211,7 @@ def supprimerCommade(doc):
     except Exception as e:
         return {"message": f"Error deleting commande: {str(e)}"}, 500
 
-# def ajoutcommande():
-#     return {"message":"ok"},200 
-     
 
-
-# # @app.route('/produi/<doc>',methods=['GET'])
-# # def getProduit(doc):
-# #    pass
-    
-# # @app.route('/produi/<doc>',methods=['DELETE'])
-# # def getProduit(doc):
-# #     pass
-# # @app.route('/produi/<doc>',methods=['PUT'])
-# # def getProduit(doc):
-# #     pass
 if __name__=='__main__':
     app.run(debug=True)
   
