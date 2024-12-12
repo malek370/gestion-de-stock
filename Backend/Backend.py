@@ -143,10 +143,15 @@ def supprimerProduit(doc):
         produit = Produit.getOne(doc, db)
         if produit is None:
             return {"message": "Produit introuvable"}, 404
+        for cmd in Commande.get(db):
+            for itm in cmd["items"]:
+                if itm["code_prod"]==doc:
+                    app.logger.info("found")
+                    return {"message":f"produit utilisé dans la commande {produit.nom_prod}"},404
         produit.supprimer(db)
         return {"message": "deleted successfully"}, 204
     except Exception as e:
-        return {"message": f"Error deleting product: {str(e)}"}, 500
+        return {"message": f"Erreur dans la supression: {str(e)}"}, 500
 
 
 # Commandes ============================================
